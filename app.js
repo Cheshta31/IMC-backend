@@ -24,6 +24,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 app.use('/register', indexRouter);
+//route for sending otp
+const sendOTP = require('./routes/index');
+app.use('/send-otp', sendOTP);
 
 
 // Set view engine to EJS

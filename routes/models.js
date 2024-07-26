@@ -1,5 +1,6 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const mailSender = require("../utils/mailSender");
 
 //connection to mongodb
 mongoose.connect(process.env.MONGODB_URI || 
@@ -18,6 +19,42 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
 });
 
-const User = mongoose.model('User', userSchema);
+//otp model
+const OTPSchema = new mongoose.Schema({
+    email: {
+      type: String,
+      required: true,
+    },
+    otp: {
+      type: String,
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      expires: 300,
+    },
+  });
 
-module.exports = User; 
+  OTPSchema.pre("save", async function (next) {
+    try {
+      //only send email when a new Document is created
+      if (this.isNew) {
+        const mailResponse = await mailSender(
+          this.email,
+          "Verification Email",
+          this.otp,
+        );
+        console.log("Verification Mail Sent :" + mailResponse.response);
+      }
+      next();
+    } catch (error) {
+      console.error("Error occurred while sending email", error);
+    }
+  });
+  
+  
+  const User = mongoose.model('User', userSchema);
+  const OTP = mongoose.model('OTP', OTPSchema);
+  
+  module.exports = { User, OTP };
